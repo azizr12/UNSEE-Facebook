@@ -8,3 +8,7 @@ A Chrome extension that enhances your Facebook privacy by blocking story view tr
 - ** Modern UI**: Clean and intuitive popup interface
 - **🔒 Privacy First**: All processing happens locally in your browser
   
+
+
+still experimrnting
+but story story view tracking is working!!
