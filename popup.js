@@ -1,12 +1,15 @@
-const keys = ['DISABLE_READ', 'DISABLE_TYPING', 'DISABLE_STORIES_SEEN'];
+const DEFAULTS = {
+    DISABLE_READ: false,
+    DISABLE_TYPING: false,
+    DISABLE_STORIES_SEEN: true
+};
 
 // Load settings
-keys.forEach(key => {
+Object.keys(DEFAULTS).forEach(key => {
     const checkbox = document.getElementById(key);
-    // Default to true if not set
     const val = localStorage.getItem('unseen_' + key);
-    checkbox.checked = val !== null ? val === 'true' : true; 
-    
+    checkbox.checked = val !== null ? val === 'true' : DEFAULTS[key];
+
     // Listen for changes
     checkbox.addEventListener('change', () => {
         localStorage.setItem('unseen_' + key, checkbox.checked);
