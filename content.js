@@ -8,8 +8,8 @@
         return val !== null ? val === 'true' : defaultValue;
     };
 
-    const blockRead = getSetting('DISABLE_READ', true);
-    const blockTyping = getSetting('DISABLE_TYPING', true);
+    const blockRead = getSetting('DISABLE_READ', false);
+    const blockTyping = getSetting('DISABLE_TYPING', false);
     const blockStories = getSetting('DISABLE_STORIES_SEEN', true);
 
     console.log('[Unseen] Core Active', { blockRead, blockTyping, blockStories });
