@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Stories Unseen for Facebook",
+  "description": "View Facebook stories without the sender knowing.",
+  "version": "1.1.0",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "https://www.facebook.com/*",
+    "https://web.facebook.com/*",
+    "https://www.messenger.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Stories Unseen"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*",
+        "https://www.messenger.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
