@@ -2,8 +2,12 @@
   "manifest_version": 3,
   "name": "Unseen for Facebook (Clean)",
   "description": "Blocks Seen, Typing, and Stories Seen receipts. Zero bloat.",
-  "version": "1.0.2",
-  "permissions": ["storage"],
+  "version": "1.0.3",
+  "permissions": [
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://web.facebook.com/*",
