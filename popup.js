@@ -4,20 +4,18 @@ const DEFAULTS = {
     DISABLE_STORIES_SEEN: true
 };
 
-// Load settings
-Object.keys(DEFAULTS).forEach(key => {
-    const checkbox = document.getElementById(key);
-    const val = localStorage.getItem('unseen_' + key);
-    checkbox.checked = val !== null ? val === 'true' : DEFAULTS[key];
+chrome.storage.local.get(DEFAULTS, (settings) => {
+    Object.keys(DEFAULTS).forEach(key => {
+        const checkbox = document.getElementById(key);
+        checkbox.checked = settings[key];
 
-    // Listen for changes
-    checkbox.addEventListener('change', () => {
-        localStorage.setItem('unseen_' + key, checkbox.checked);
-        // Reload active tab to apply changes immediately
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs[0]?.url?.includes('facebook.com') || tabs[0]?.url?.includes('messenger.com')) {
-                chrome.tabs.reload(tabs[0].id);
-            }
+        checkbox.addEventListener('change', () => {
+            chrome.storage.local.set({ [key]: checkbox.checked });
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (tabs[0]?.url?.includes('facebook.com') || tabs[0]?.url?.includes('messenger.com')) {
+                    chrome.tabs.reload(tabs[0].id);
+                }
+            });
         });
     });
 });
