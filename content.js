@@ -2,7 +2,7 @@
     if (window.__unseen_core_injected) return;
     window.__unseen_core_injected = true;
 
-    // Read settings from localStorage (simple, zero-dependency storage for MAIN world)
+    // Read settings from localStorage in the MAIN world
     const getSetting = (key, defaultValue) => {
         const val = localStorage.getItem('unseen_' + key);
         return val !== null ? val === 'true' : defaultValue;
@@ -12,7 +12,7 @@
     const blockTyping = getSetting('DISABLE_TYPING', false);
     const blockStories = getSetting('DISABLE_STORIES_SEEN', true);
 
-    console.log('[Unseen] Core Active', { blockRead, blockTyping, blockStories });
+    console.log('[UNSEEN] Core Active - Settings:', { blockRead, blockTyping, blockStories });
 
     // ==========================================
     // 1. BLOCK STORIES SEEN (Network Interception)
@@ -27,8 +27,7 @@
 
             if (typeof url === 'string' && url.includes('/api/graphql/')) {
                 if (typeof body === 'string' && body.includes('storiesUpdateSeenStateMutation')) {
-                    console.log('[Unseen] 🛑 Blocked storiesUpdateSeenStateMutation (Fetch)');
-                    // Return a fake successful response so Facebook's UI doesn't break
+                    console.log('[UNSEEN] [BLOCK] Blocked storiesUpdateSeenStateMutation (Fetch)');
                     return Promise.resolve(new Response('{"data":{"direct_message_thread_update_seen_state":{}}}', { 
                         status: 200, 
                         headers: { 'Content-Type': 'application/json' } 
@@ -50,8 +49,7 @@
         XMLHttpRequest.prototype.send = function(body) {
             if (typeof this._unseen_url === 'string' && this._unseen_url.includes('/api/graphql/')) {
                 if (typeof body === 'string' && body.includes('storiesUpdateSeenStateMutation')) {
-                    console.log('[Unseen] 🛑 Blocked storiesUpdateSeenStateMutation (XHR)');
-                    // Mock a successful response
+                    console.log('[UNSEEN] [BLOCK] Blocked storiesUpdateSeenStateMutation (XHR)');
                     Object.defineProperty(this, 'responseText', { value: '{"data":{"direct_message_thread_update_seen_state":{}}}' });
                     Object.defineProperty(this, 'response', { value: '{"data":{"direct_message_thread_update_seen_state":{}}}' });
                     Object.defineProperty(this, 'status', { value: 200 });
@@ -66,6 +64,16 @@
                 }
             }
             return originalXHRSend.apply(this, arguments);
+        };
+
+        // Intercept sendBeacon (Background telemetry)
+        const originalBeacon = navigator.sendBeacon;
+        navigator.sendBeacon = function(url, data) {
+            if (typeof data === 'string' && data.includes('storiesUpdateSeenStateMutation')) {
+                console.log('[UNSEEN] [BLOCK] Blocked story tracking beacon');
+                return true; 
+            }
+            return originalBeacon.apply(this, arguments);
         };
     }
 
@@ -82,7 +90,10 @@
             if (blockTyping && moduleName.includes("MAWSecureTypingState")) {
                 try {
                     newFactory = new Function('return ' + factory.toString().replaceAll("sendChatStateFromComposer", "none"))();
-                } catch (e) {}
+                    console.log('[UNSEEN] [OK] Patched MAWSecureTypingState');
+                } catch (e) {
+                    console.warn('[UNSEEN] [WARN] Failed to patch typing state', e);
+                }
             }
 
             const wrappedFactory = function(require, module, exports, ...args) {
@@ -97,7 +108,7 @@
                             target[6].default = function(...fnArgs) {
                                 const callback = fnArgs[fnArgs.length - 1];
                                 if (callback?.resolve) {
-                                    console.log('[Unseen] 🛑 Blocked Read Receipt');
+                                    console.log('[UNSEEN] [STOP] Blocked Read Receipt');
                                     return callback.resolve([]);
                                 }
                                 return orig.apply(this, fnArgs);
@@ -112,7 +123,7 @@
                             const orig = typingTarget;
                             const wrapped = function(...fnArgs) {
                                 if (fnArgs.length > 2) {
-                                    console.log('[Unseen] 🛑 Blocked Typing Indicator');
+                                    console.log('[UNSEEN] [STOP] Blocked Typing Indicator');
                                     fnArgs[2] = false;
                                 }
                                 return orig.apply(this, fnArgs);
