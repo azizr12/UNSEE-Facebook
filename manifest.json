@@ -1,13 +1,9 @@
 {
   "manifest_version": 3,
   "name": "Unseen for Facebook",
-  "description": "Blocks See Stories On FACEBOOK",
-  "version": "1.0.4",
-  "permissions": [
-    "storage",
-    "alarms",
-    "notifications"
-  ],
+  "description": "Blocks Facebook story view tracking.",
+  "version": "2.0.0",
+  "permissions": ["storage"],
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://web.facebook.com/*",
@@ -25,10 +21,6 @@
       "world": "MAIN"
     }
   ],
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
   "action": {
     "default_popup": "popup.html"
   }
