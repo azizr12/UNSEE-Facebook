@@ -1,5 +1,5 @@
 {
-  "version": "1.0.4",
+  "version": "1.0.5",
   "downloadUrl": "https://github.com/azizr12/UNSEE-Facebook/releases/latest",
   "releaseNotes": "Fixed setting reactivity and improved module interception resilience."
 }
