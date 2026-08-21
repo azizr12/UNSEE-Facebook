@@ -12,11 +12,9 @@ A small Chrome extension that prevents Facebook story view tracking.
 
 ## Installation
 
+1. Download latest zip release and extract its contents to folder
 1. Open `chrome://extensions`.
 2. Enable **Developer mode**.
 3. Choose **Load unpacked**.
-4. Select this repository directory.
-
-## Updates
-
-When distributed through the Chrome Web Store, Chrome handles extension updates automatically. The extension deliberately does not implement a custom GitHub updater because Chrome does not allow a normal extension to silently replace its own installed package.
+5. Select the extracted repository directory.
+6. ENJOY
