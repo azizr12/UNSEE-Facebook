@@ -4,8 +4,7 @@ A Chrome extension that enhances your Facebook privacy by blocking story view tr
 
 ## Features
 
-- Anonymous Story Viewing 
-     View Facebook stories without the owner knowing
+- Anonymous View Facebook stories without the owner knowing
 - Clean and intuitive popup interface
 - All processing happens locally in your browser
 
