@@ -1,18 +1,20 @@
 {
   "manifest_version": 3,
-  "name": "Unseen for Facebook",
+  "name": "Unseen Story for Facebook",
   "description": "Blocks Facebook story view tracking.",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
     "https://www.facebook.com/*",
-    "https://web.facebook.com/*"
+    "https://web.facebook.com/*",
+    "https://m.facebook.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://www.facebook.com/*",
-        "https://web.facebook.com/*"
+        "https://web.facebook.com/*",
+        "https://m.facebook.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_start",
