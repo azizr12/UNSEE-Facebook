@@ -1,13 +1,16 @@
+// content.js (Must run in "world": "MAIN")
 (function() {
     if (window.__unseen_debug) return;
     window.__unseen_debug = true;
 
-    console.log("%c[UNSEEN DEBUG] === CORE SCRIPT STARTED ===", "background: #222; color: #bada55; font-size: 16px; padding: 5px;");
+    console.log("%c[UNSEEN] === CORE SCRIPT STARTED ===", "background: #222; color: #bada55; font-size: 14px; padding: 5px;");
     
+    // Fallback config (will be overwritten by config-injector.js)
     window.unseen_config = window.unseen_config || {
         DISABLE_STORIES_SEEN: { enable: true }
     };
 
+    // Helper to safely compile modified code under Facebook's strict CSP
     function compileCode(codeStr) {
         try {
             const id = 'fn_' + Math.random().toString(36).substr(2, 9);
@@ -18,7 +21,7 @@
             script.remove();
             return window.__unseen_cache[id];
         } catch (e) {
-            console.error("[UNSEEN DEBUG] ❌ CSP Compile Failed:", e);
+            console.error("[UNSEEN] ❌ CSP Compile Failed:", e);
             return null;
         }
     }
@@ -26,17 +29,22 @@
     const TARGETS = {
         "StoriesSuspenseBucketContainer.react": {
             type: "CODE",
-            apply: (code) => {
-                let newCode = code.replace(/,onCardSeen:\s*(\w+),/g, ",onCardSeen:window?.unseen_config?.DISABLE_STORIES_SEEN?.enable ? ()=>{} : $1,");
-                if (newCode === code) {
-                    newCode = code.replace(/onCardSeen\s*:\s*(\w+)/g, "onCardSeen: window?.unseen_config?.DISABLE_STORIES_SEEN?.enable ? ()=>{} : $1");
+            apply: (codeStr) => {
+                if (!window.unseen_config?.DISABLE_STORIES_SEEN?.enable) {
+                    return codeStr; // Feature disabled, return original
                 }
-                return newCode;
+                // More resilient regex: matches "onCardSeen: someFunction" with flexible spacing
+                return codeStr.replace(/(onCardSeen\s*:\s*)(\w+)/g, "$1(window.unseen_config?.DISABLE_STORIES_SEEN?.enable ? ()=>{} : $2)");
             }
         }
     };
 
-    if (typeof window.__d !== 'function') return;
+    // Ensure Facebook's module system is present before hooking
+    if (typeof window.__d !== 'function') {
+        console.warn("[UNSEEN] window.__d not found yet. Retrying...");
+        setTimeout(() => window.location.reload(), 1000); // Simple retry mechanism
+        return;
+    }
 
     const originalDefine = window.__d;
     const hookedSet = new Set();
@@ -45,29 +53,25 @@
         const moduleName = String(moduleId);
         const target = TARGETS[moduleName];
 
-        if (target) {
-            if (target.type === "CODE") {
-                try {
-                    const originalStr = factory.toString();
-                    const newStr = target.apply(originalStr);
-                    if (newStr !== originalStr) {
-                        factory = compileCode(newStr) || factory;
-                    }
-                } catch (e) {}
-            }
-
-            const originalFactory = factory;
-            factory = function(require, module, exports, ...args) {
-                originalFactory.call(this, require, module, exports, ...args);
-                const exportTarget = module?.exports || exports;
-                if (exportTarget) {
-                    const success = target.apply(exportTarget);
-                    if (success && !hookedSet.has(moduleName)) {
+        if (target && target.type === "CODE" && !hookedSet.has(moduleName)) {
+            try {
+                const originalStr = factory.toString();
+                const newStr = target.apply(originalStr);
+                
+                if (newStr !== originalStr) {
+                    const compiledFactory = compileCode(newStr);
+                    if (compiledFactory) {
+                        factory = compiledFactory;
                         hookedSet.add(moduleName);
+                        console.log(`%c[UNSEEN] ✅ Successfully hooked: ${moduleName}`, "color: #4caf50;");
                     }
                 }
-            };
+            } catch (e) {
+                console.error(`[UNSEEN] ❌ Failed to hook ${moduleName}:`, e);
+            }
         }
+
+        // Execute the original (or safely modified) factory
         return originalDefine.call(this, factory, moduleId, ...rest);
     };
 })();

@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "Unseen for Facebook",
-  "description": "Blocks Seen From Stories",
+  "description": "Blocks Seen Stories on FACEBOOK",
   "version": "1.0.3",
   "permissions": [
     "storage",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "notifications",
+    "alarms"
   ],
   "host_permissions": [
     "https://www.facebook.com/*",
@@ -20,12 +22,25 @@
         "https://web.facebook.com/*",
         "https://www.messenger.com/*"
       ],
+      "js": ["config-injector.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://www.facebook.com/*",
+        "https://web.facebook.com/*",
+        "https://www.messenger.com/*"
+      ],
       "js": ["content.js"],
       "run_at": "document_start",
       "world": "MAIN"
     }
   ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "action": {
-    "default_popup": "popup.html"
-  }
+    "default_popup": "popup.html",
+  },
 }
