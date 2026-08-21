@@ -1,6 +1,4 @@
 const DEFAULTS = {
-    DISABLE_READ: false,
-    DISABLE_TYPING: false,
     DISABLE_STORIES_SEEN: true
 };
 
@@ -8,6 +6,8 @@ const DEFAULTS = {
 chrome.storage.local.get(DEFAULTS, (result) => {
     Object.keys(DEFAULTS).forEach(key => {
         const checkbox = document.getElementById(key);
+        if (!checkbox) return;
+
         checkbox.checked = result[key];
 
         // Listen for changes
@@ -24,7 +24,6 @@ chrome.storage.local.get(DEFAULTS, (result) => {
                 await chrome.scripting.executeScript({
                     target: { tabId: tab.id },
                     func: (settingKey, settingVal) => {
-                        // This runs inside Facebook's context
                         localStorage.setItem('unseen_' + settingKey, settingVal);
                     },
                     args: [key, val],

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Unseen for Facebook (Clean)",
-  "description": "Blocks Seen, Typing, and Stories Seen receipts. Zero bloat.",
+  "name": "Unseen for Facebook",
+  "description": "Blocks Seen From Stories",
   "version": "1.0.3",
   "permissions": [
     "storage",

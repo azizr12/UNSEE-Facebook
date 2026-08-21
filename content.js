@@ -8,14 +8,11 @@
         return val !== null ? val === 'true' : defaultValue;
     };
 
-    const blockRead = getSetting('DISABLE_READ', false);
-    const blockTyping = getSetting('DISABLE_TYPING', false);
     const blockStories = getSetting('DISABLE_STORIES_SEEN', true);
-
-    console.log('[UNSEEN] Core Active - Settings:', { blockRead, blockTyping, blockStories });
+    console.log('[UNSEEN] Core Active - Story Blocking:', blockStories);
 
     // ==========================================
-    // 1. BLOCK STORIES SEEN (Network Interception)
+    // BLOCK STORIES SEEN (Network Interception)
     // ==========================================
     if (blockStories) {
         // Intercept Fetch API
@@ -74,68 +71,6 @@
                 return true; 
             }
             return originalBeacon.apply(this, arguments);
-        };
-    }
-
-    // ==========================================
-    // 2. BLOCK TYPING & READ (Module Interception)
-    // ==========================================
-    const originalDefine = window.__d;
-    if (typeof originalDefine === 'function') {
-        window.__d = function(factory, moduleId, ...rest) {
-            const moduleName = String(moduleId);
-            let newFactory = factory;
-
-            // Block Typing at source code level
-            if (blockTyping && moduleName.includes("MAWSecureTypingState")) {
-                try {
-                    newFactory = new Function('return ' + factory.toString().replaceAll("sendChatStateFromComposer", "none"))();
-                    console.log('[UNSEEN] [OK] Patched MAWSecureTypingState');
-                } catch (e) {
-                    console.warn('[UNSEEN] [WARN] Failed to patch typing state', e);
-                }
-            }
-
-            const wrappedFactory = function(require, module, exports, ...args) {
-                newFactory.call(this, require, module, exports, ...args);
-                
-                const target = module?.exports || exports;
-                if (target) {
-                    // Block Read Receipts
-                    if (blockRead && (moduleName.includes("LSOptimisticMarkThreadReadV2") || moduleName.includes("useMAWMarkThreadAsRead"))) {
-                        if (target[6]?.default) {
-                            const orig = target[6].default;
-                            target[6].default = function(...fnArgs) {
-                                const callback = fnArgs[fnArgs.length - 1];
-                                if (callback?.resolve) {
-                                    console.log('[UNSEEN] [STOP] Blocked Read Receipt');
-                                    return callback.resolve([]);
-                                }
-                                return orig.apply(this, fnArgs);
-                            };
-                        }
-                    }
-                    
-                    // Block Typing Indicator (Fallback)
-                    if (blockTyping && moduleName.includes("LSSendTypingIndicator")) {
-                        const typingTarget = target[4]?.exports?.default || target[4]?.exports;
-                        if (typeof typingTarget === "function") {
-                            const orig = typingTarget;
-                            const wrapped = function(...fnArgs) {
-                                if (fnArgs.length > 2) {
-                                    console.log('[UNSEEN] [STOP] Blocked Typing Indicator');
-                                    fnArgs[2] = false;
-                                }
-                                return orig.apply(this, fnArgs);
-                            };
-                            if (target[4]?.exports?.default) target[4].exports.default = wrapped;
-                            else target[4].exports = wrapped;
-                        }
-                    }
-                }
-            };
-
-            return originalDefine.call(this, wrappedFactory, moduleId, ...rest);
         };
     }
 })();
