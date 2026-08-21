@@ -1,0 +1,52 @@
+name: Build extension release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate tag matches manifest
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="${{ steps.version.outputs.version }}"
+          test "$tag" = "$version" || {
+            echo "Tag v$tag does not match manifest version $version"
+            exit 1
+          }
+
+      - name: Package extension
+        shell: bash
+        run: |
+          mkdir -p dist
+          zip -r "dist/UNSEE-Facebook-v${{ steps.version.outputs.version }}.zip" . \
+            -x '.git/*' \
+               '.github/*' \
+               'dist/*' \
+               '*.zip'
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          files: dist/UNSEE-Facebook-v${{ steps.version.outputs.version }}.zip
