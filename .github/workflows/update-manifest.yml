@@ -1,0 +1,28 @@
+name: Update Extension Manifest
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-json:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Update update.json
+        run: |
+          echo '{
+            "version": "${{ github.event.release.tag_name }}",
+            "downloadUrl": "${{ github.event.release.assets[0].browser_download_url }}",
+            "releaseNotes": "${{ github.event.release.body }}"
+          }' > update.json
+
+      - name: Commit and push update.json
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add update.json
+          git commit -m "chore: update update.json for release ${{ github.event.release.tag_name }}"
+          git push
