@@ -1,38 +1,51 @@
-const DEFAULTS = {
-    DISABLE_STORIES_SEEN: true
-};
+const SETTING = "DISABLE_STORIES_SEEN";
+const DEFAULT_VALUE = true;
 
-// Load settings from Chrome storage
-chrome.storage.local.get(DEFAULTS, (result) => {
-    Object.keys(DEFAULTS).forEach(key => {
-        const checkbox = document.getElementById(key);
-        if (!checkbox) return;
+const checkbox = document.getElementById(SETTING);
 
-        checkbox.checked = result[key];
+async function getActiveFacebookTab() {
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  });
 
-        // Listen for changes
-        checkbox.addEventListener('change', async () => {
-            const val = checkbox.checked;
-            
-            // 1. Save to extension storage
-            chrome.storage.local.set({ [key]: val });
-            
-            // 2. Write directly to Facebook's localStorage using scripting API
-            const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-            
-            if (tab && (tab.url.includes('facebook.com') || tab.url.includes('messenger.com'))) {
-                await chrome.scripting.executeScript({
-                    target: { tabId: tab.id },
-                    func: (settingKey, settingVal) => {
-                        localStorage.setItem('unseen_' + settingKey, settingVal);
-                    },
-                    args: [key, val],
-                    world: "MAIN"
-                });
-                
-                // Reload tab to apply changes immediately
-                chrome.tabs.reload(tab.id);
-            }
-        });
+  if (!tab?.id || !/^https:\/\/(www\.|web\.)?(facebook|messenger)\.com\//.test(tab.url || "")) {
+    return null;
+  }
+
+  return tab;
+}
+
+async function applySetting(value) {
+  await chrome.storage.local.set({ [SETTING]: value });
+
+  const tab = await getActiveFacebookTab();
+  if (!tab) return;
+
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      world: "MAIN",
+      func: (key, enabled) => {
+        localStorage.setItem(`unseen_${key}`, String(enabled));
+        window.dispatchEvent(
+          new StorageEvent("storage", {
+            key: `unseen_${key}`,
+            newValue: String(enabled)
+          })
+        );
+      },
+      args: [SETTING, value]
     });
+  } catch (error) {
+    console.debug("[Unseen] Could not update the active tab", error);
+  }
+}
+
+chrome.storage.local.get({ [SETTING]: DEFAULT_VALUE }, (result) => {
+  checkbox.checked = Boolean(result[SETTING]);
+});
+
+checkbox.addEventListener("change", () => {
+  applySetting(checkbox.checked);
 });
