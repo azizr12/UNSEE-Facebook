@@ -1,20 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "Unseen Story for Facebook",
-  "description": "Blocks Facebook story view tracking.",
-  "version": "2.0.5",
+  "name": "Unseen for Facebook & Instagram",
+  "description": "Blocks Facebook and Instagram story view tracking.",
+  "version": "2.1.1",
   "permissions": ["storage", "scripting", "activeTab"],
   "host_permissions": [
     "https://www.facebook.com/*",
     "https://web.facebook.com/*",
-    "https://m.facebook.com/*"
+    "https://m.facebook.com/*",
+    "https://www.instagram.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://www.facebook.com/*",
         "https://web.facebook.com/*",
-        "https://m.facebook.com/*"
+        "https://m.facebook.com/*",
+        "https://www.instagram.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_start",

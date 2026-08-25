@@ -1,27 +1,30 @@
 const SETTING = "DISABLE_STORIES_SEEN";
 const DEFAULT_VALUE = true;
-
 const checkbox = document.getElementById(SETTING);
 
-async function getActiveFacebookTab() {
+async function getActiveSupportedTab() {
   const [tab] = await chrome.tabs.query({
     active: true,
     currentWindow: true
   });
-
-  if (!tab?.id || !/^https:\/\/(www\.|web\.)?(facebook|messenger)\.com\//.test(tab.url || "")) {
+  
+  const url = tab?.url || "";
+  // Check if the current tab is Facebook, Messenger, or Instagram
+  const isSupported = url.includes("facebook.com") || 
+                      url.includes("messenger.com") || 
+                      url.includes("instagram.com");
+                      
+  if (!tab?.id || !isSupported) {
     return null;
   }
-
   return tab;
 }
 
 async function applySetting(value) {
   await chrome.storage.local.set({ [SETTING]: value });
-
-  const tab = await getActiveFacebookTab();
+  const tab = await getActiveSupportedTab();
   if (!tab) return;
-
+  
   try {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
